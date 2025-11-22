@@ -1,0 +1,85 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-11-22 17:24:56.856791",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "compound_name",
+  "master_batch",
+  "final_batch",
+  "mixing_centre",
+  "mixing_items",
+  "mixing_time",
+  "produces_items"
+ ],
+ "fields": [
+  {
+   "fieldname": "compound_name",
+   "fieldtype": "Data",
+   "label": "compound_name"
+  },
+  {
+   "default": "0",
+   "fieldname": "master_batch",
+   "fieldtype": "Check",
+   "label": "master_batch"
+  },
+  {
+   "default": "0",
+   "fieldname": "final_batch",
+   "fieldtype": "Check",
+   "label": "final_batch"
+  },
+  {
+   "fieldname": "mixing_centre",
+   "fieldtype": "Data",
+   "label": "mixing_centre"
+  },
+  {
+   "fieldname": "mixing_items",
+   "fieldtype": "Table",
+   "label": "mixing_items",
+   "options": "Mixing Items"
+  },
+  {
+   "fieldname": "mixing_time",
+   "fieldtype": "Table",
+   "label": "mixing_time",
+   "options": "Mixing Time"
+  },
+  {
+   "fieldname": "produces_items",
+   "fieldtype": "Table",
+   "label": "produces_items",
+   "options": "Mixing Sequence Mapping"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-11-22 17:32:46.115814",
+ "modified_by": "Administrator",
+ "module": "kneader3009",
+ "name": "Mixing Sequence",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
