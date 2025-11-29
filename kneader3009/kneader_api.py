@@ -9,24 +9,47 @@ from datetime import datetime, timedelta
 # -------------------- Helpers --------------------
 
 def _parse_batch_date(batch_no: str):
-    """Return (start_date, end_date) covering the month derived from batch."""
-    batch_no = str(batch_no or "").strip()
-    if len(batch_no) < 5:
+    """
+    Robust parse:
+    - If batch looks like YY<LETTER>DD... (e.g. 25K15...), parse month/year/day.
+    - Otherwise return a safe wide range (last 90 days -> today).
+    """
+    import re
+    from datetime import datetime, timedelta
+
+    b = str(batch_no or "").strip()
+    # pattern: two digits, letter, two digits (e.g. 25K15)
+    m = re.match(r"^(\d{2})([A-Za-z])(\d{2})", b)
+    if not m:
         today = datetime.today()
-        return today.replace(day=1).date(), today.date()
+        start = (today - timedelta(days=90)).date()
+        end = today.date()
+        return start, end
 
-    year = int("20" + batch_no[:2])
-    month_letter = batch_no[2].upper()
-    day = int(batch_no[3:5])
+    try:
+        year = int("20" + m.group(1))
+        month_letter = m.group(2).upper()
+        day = int(m.group(3))
 
-    month = string.ascii_uppercase.index(month_letter) + 1
-    current_date = datetime(year, month, day)
+        # map letter -> month (A=1, B=2, ...)
+        import string
+        month = string.ascii_uppercase.index(month_letter) + 1
+        # guard month range
+        if month < 1 or month > 12:
+            raise ValueError("month letter out of range")
 
-    first_day_current = current_date.replace(day=1)
-    prev_month_last_day = first_day_current - timedelta(days=1)
-    first_day_prev = prev_month_last_day.replace(day=1)
+        current_date = datetime(year, month, day)
 
-    return first_day_prev.date(), current_date.date()
+        first_day_current = current_date.replace(day=1)
+        prev_month_last_day = first_day_current - timedelta(days=1)
+        first_day_prev = prev_month_last_day.replace(day=1)
+
+        return first_day_prev.date(), current_date.date()
+    except Exception:
+        today = datetime.today()
+        start = (today - timedelta(days=90)).date()
+        end = today.date()
+        return start, end
 
 
 def _extract_item(row: dict):
