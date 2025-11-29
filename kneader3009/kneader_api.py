@@ -129,7 +129,8 @@ def _get_final_production_item_internal(batch_no: str):
     item_code_prefix = prefix_match.group(0) if prefix_match else (item_code_full.split()[0] if item_code_full else "")
 
     # Try to find BOM by item (exact or prefix) or by BOM Item child table
-    # 1) Try BOM where BOM.item like prefix%
+    # 1) Try BOM where BOM.item like prefix% (normal case)
+    boms = []
     if item_code_prefix:
         boms = frappe.get_all(
             "BOM",
@@ -141,8 +142,6 @@ def _get_final_production_item_internal(batch_no: str):
             fields=["name", "item"],
             limit_page_length=1,
         )
-    else:
-        boms = []
 
     # 2) Fallback: BOM by child table BOM Item.item_code
     if not boms:
@@ -156,20 +155,48 @@ def _get_final_production_item_internal(batch_no: str):
             limit_page_length=1,
         )
 
+    # 3) Additional tolerant fallback:
+    #    If still not found, try transforming prefix like B_60103 -> MB_60103
+    #    and also try numeric substring matches to find BOM.item containing the digits.
+    if not boms and item_code_prefix:
+        # try MB_ prefix (if we have numeric part)
+        digits_match = re.search(r"(\d+)", item_code_prefix)
+        tried = []
+        if digits_match:
+            digits = digits_match.group(1)
+            candidates = [f"MB_{digits}", f"MB{digits}", f"%{digits}%"]
+            for c in candidates:
+                if c in tried:
+                    continue
+                tried.append(c)
+                if c.startswith("%"):
+                    # use a like filter for substring
+                    boms = frappe.get_all(
+                        "BOM",
+                        filters={
+                            "item": ["like", c],
+                            "is_default": 1,
+                            "is_active": 1,
+                        },
+                        fields=["name", "item"],
+                        limit_page_length=1,
+                    )
+                else:
+                    boms = frappe.get_all(
+                        "BOM",
+                        filters={
+                            "item": ["like", f"{c}%"],
+                            "is_default": 1,
+                            "is_active": 1,
+                        },
+                        fields=["name", "item"],
+                        limit_page_length=1,
+                    )
+                if boms:
+                    break
+
     if not boms:
         return None
-
-    bom = boms[0]
-    final_item = bom.get("item")
-
-    return {
-        "stock_entry": se_name,
-        "batch_no": batch_no,
-        "item_code_full": item_code_full,
-        "item_code_prefix": item_code_prefix,
-        "bom_no": bom.get("name"),
-        "final_item": final_item,
-    }
 
 
 # -------------------- Step: final_item -> Mixing Sequence --------------------
